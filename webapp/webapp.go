@@ -50,11 +50,12 @@ func englishHandler(writer http.ResponseWriter, request *http.Request) {
 }
 
 func spanishhHandler(writer http.ResponseWriter, request *http.Request) {
-	write(writer, "Halo Internet")
+	write(writer, "Hola Internet")
 }
 
 func interactHandler(writer http.ResponseWriter, request *http.Request) {
-	todoVals := getStrings("data.txt")
+
+	todoVals := getStrings("todos.txt")
 	fmt.Printf("%#v\n", todoVals)
 	// using templates
 	tmpl, err := template.ParseFiles("view.html")
@@ -80,15 +81,26 @@ func newHandler(writer http.ResponseWriter, request *http.Request) {
 func createHandler(writer http.ResponseWriter, request *http.Request) {
 	todo := request.FormValue("todo")
 	options := os.O_WRONLY | os.O_APPEND | os.O_CREATE
-	file, err := os.OpenFile("todo.txt", options, os.FileMode(0600))
+	file, err := os.OpenFile("todos.txt", options, os.FileMode(0600))
 	errorCheck(err)
 	_, err = fmt.Fprintln(file, todo)
 	errorCheck(err)
 	err = file.Close()
 	errorCheck(err)
+	// after writing the data from the form into the file, we close the file
+	http.Redirect(writer, request, "/interact",
+		http.StatusFound)
 
 }
 
 func main() {
+	http.HandleFunc("/hello", englishHandler)
+	http.HandleFunc("/hola", spanishhHandler)
+	http.HandleFunc("/interact", interactHandler)
+	http.HandleFunc("/new", newHandler)
+	http.HandleFunc("/create", createHandler)
+
+	err := http.ListenAndServe("localhost:8080", nil)
+	log.Fatal(err)
 
 }
